@@ -1,0 +1,3 @@
+name,indices,store,docs,indexing,search,get,query_cache,request_cache,fielddata,segments,merges,refresh,flush
+my-index-000001,my-index-000001,,,,,,,,,,,,
+stock,stock,null,null,null,null,null,null,null,null,null,null,null,null
