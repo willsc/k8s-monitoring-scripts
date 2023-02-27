@@ -1,0 +1,25 @@
+/* ----------------- BOX AND JOB DEFINITIONS ------------------ */
+
+delete_job: my_job
+delete_box: my_box
+
+insert_job: my_job
+command: my_command
+owner: my_username
+permission: gx,ge,wx,we,mx,me
+description: "My job description"
+condition: s("my_box")
+
+insert_box: my_box
+owner: my_username
+permission: gx,ge,wx,we,mx,me
+description: "My box description"
+box_success: my_job
+
+/* ----------------- BOX ASSIGNMENTS ------------------ */
+
+my_job:
+
+/* ----------------- END OF JOB FILE ------------------ */
+
+/* ----------------- END OF BOX FILE ------------------ */
