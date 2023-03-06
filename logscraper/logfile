@@ -1,0 +1,7 @@
+2023-030-06 07:45:41.993,553 INFO   [StandardIo] (SessionStateTracker.java) - Current  session state: [FEP-CLIENT[UNAVAILABLE]]
+2023-030-06 07:45:41.995,539 INFO   [StandardIo] (SessionStateTracker.java) - Current  session state: [PROD-FLOWVOL-SERVER1[UNAVAILABLE]]
+2023-030-06 07:45:41.995,595 INFO   [StandardIo] (SessionStateTracker.java) - Current  session state: [PROD-FLOWVOL-SERVER2[UNAVAILABLE]]
+2023-030-06 07:45:42.070,084 INFO   [StandardIo] (SessionStateTracker.java) - Current  session state: [FEP-CLIENT[AVAILABLE]]
+2023-030-06 07:45:45.936,927 INFO   [StandardIo] (SessionStateTracker.java) - Current  session state: [PROD-FLOWVOL-SERVER1[AVAILABLE]]
+
+
