@@ -1,0 +1,2 @@
+sed -i.bak 's/\[//g; s/\]//g' csv.foo
+ sed -i.bak 's/AVAILABLE/,&/g' csv.foo
