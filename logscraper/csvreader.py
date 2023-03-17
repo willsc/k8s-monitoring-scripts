@@ -60,7 +60,7 @@ with open('results.csv', 'w', newline='') as csvfile:
 
 
 # How to run the script:
-# python3 csvreader.py test1.csv test2.csv 0 0  
+# python3 csvreader.py test1.csv test2.csv 0 0
 
 
 
