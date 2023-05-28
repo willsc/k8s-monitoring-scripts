@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kdb.fullname" . }}
+  labels:
+    {{- include "kdb.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: kdb
+      protocol: TCP
+      name: kdb
+  selector:
+    {{- include "kdb.selectorLabels" . | nindent 4 }}
