@@ -1,5 +1,5 @@
 # k8s-monitoring-scripts
-
+```
 #!/bin/bash
 
 NAMESPACE="your-namespace"
@@ -38,3 +38,4 @@ for pod in $pods; do
 
   echo ""
 done
+```
