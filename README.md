@@ -39,3 +39,74 @@ for pod in $pods; do
   echo ""
 done
 ```
+
+```
+import subprocess
+import csv
+
+
+class DiskUsage:
+    """A class to get the disk usage of pods in a namespace."""
+
+    def __init__(self, namespace):
+        """Initializes the class.
+
+        Args:
+            namespace (str): The namespace to get the disk usage for.
+        """
+
+        self.namespace = namespace
+
+    def get_disk_usage(self):
+        """Gets the disk usage of all pods in the namespace.
+
+        Returns:
+            dict: A dictionary of pod names to disk usage.
+        """
+
+        pods = subprocess.check_output([
+            "kubectl", "get", "pods", "-n", self.namespace, "-o", "name"
+        ]).decode("utf-8").strip()
+
+        disk_usage = {}
+        for pod in pods.splitlines():
+            output = subprocess.check_output([
+                "kubectl", "exec", "-it", pod, "--namespace", self.namespace, "--", "df", "-h"
+            ]).decode("utf-8").strip()
+
+            for line in output.splitlines():
+                if line.startswith("Filesystem"):
+                    continue
+
+                fields = line.split()
+                disk_usage[pod] = fields[3]
+
+        return disk_usage
+
+    def write_to_csv(self, filename):
+        """Writes the disk usage to a CSV file.
+
+        Args:
+            filename (str): The name of the CSV file to write to.
+        """
+
+        with open(filename, "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(["pod", "used_space"])
+            for pod, used_space in self.get_disk_usage().items():
+                writer.writerow([pod, used_space])
+
+
+def main():
+    """The main function."""
+
+    namespace = input("Enter the namespace: ")
+
+    disk_usage = DiskUsage(namespace)
+    disk_usage.write_to_csv("disk-usage.csv")
+
+
+if __name__ == "__main__":
+    main()
+    ```
+    
