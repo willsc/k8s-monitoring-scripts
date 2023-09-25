@@ -1,0 +1,55 @@
+import subprocess
+import csv
+
+# Define the namespace
+namespace = "your-namespace"
+
+# Define the name patterns to filter pods
+pod_name_patterns = ["pattern1*", "pattern2*"]  # Add more patterns as needed
+
+# Define the directory path you want to check
+directory_path = "/path/to/your/directory"
+
+# Define the CSV file name
+csv_filename = "directory_contents.csv"
+
+# Initialize an empty list to store directory contents
+directory_contents = []
+
+# Loop through the specified pod name patterns
+for pod_name_pattern in pod_name_patterns:
+    try:
+        # Run kubectl get pods to list pods with the current pattern
+        get_pods_command = f"kubectl get pods -n {namespace} --selector=name={pod_name_pattern} --output=jsonpath={{.items[*].metadata.name}}"
+        pod_names = subprocess.check_output(get_pods_command, shell=True, text=True).split()
+
+        # Loop through the matching pods and execute 'ls -lrt' inside each pod
+        for pod_name in pod_names:
+            try:
+                exec_command = f"kubectl exec -n {namespace} {pod_name} -- ls -lrt {directory_path}"
+                ls_output = subprocess.check_output(exec_command, shell=True, text=True)
+                ls_lines = ls_output.split("\n")
+
+                for line in ls_lines:
+                    # Split each line into columns
+                    columns = line.split()
+
+                    if len(columns) == 9:
+                        permissions, owner, group, size, date, name = columns[0], columns[2], columns[3], columns[4], f"{columns[5]} {columns[6]}", columns[8]
+                        directory_contents.append([pod_name, permissions, owner, group, size, date, name])
+            except subprocess.CalledProcessError as e:
+                print(f"Error executing command for pod {pod_name}: {e}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error listing pods for pattern {pod_name_pattern}: {e}")
+
+# Write the directory contents to a CSV file
+with open(csv_filename, "w", newline="") as csvfile:
+    csv_writer = csv.writer(csvfile)
+
+    # Write a header row
+    csv_writer.writerow(["Pod Name", "Permissions", "Owner", "Group", "Size", "Date", "Name"])
+
+    for row in directory_contents:
+        csv_writer.writerow(row)
+
+print(f"Directory contents of '{directory_path}' in matching pods have been written to {csv_filename}")
