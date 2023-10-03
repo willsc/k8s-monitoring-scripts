@@ -1,0 +1,28 @@
+find_previous_friday_files() {
+  current_day=$(date +%u)  # Get the current day of the week (1 for Monday, 5 for Friday)
+
+  if [ "$current_day" -ge 1 ] && [ "$current_day" -le 5 ]; then
+    # Calculate the date of the previous Friday
+    if [ "$current_day" -eq 1 ]; then
+      days_to_subtract=3
+    else
+      days_to_subtract=$((current_day - 1))
+    fi
+    previous_friday=$(date -d "-$days_to_subtract days" '+%Y-%m-%d')
+    
+    # Define your file pattern here
+    file_pattern="your_pattern_${previous_friday}.gz"
+    
+    # Search for and display files
+    found_files=$(find /path/to/search -type f -name "$file_pattern" 2>/dev/null)
+    
+    if [ -n "$found_files" ]; then
+      echo "Found files for $previous_friday:"
+      echo "$found_files"
+    else
+      echo "No files found for $previous_friday."
+    fi
+  else
+    echo "Today is not a weekday (Monday to Friday)."
+  fi
+}
