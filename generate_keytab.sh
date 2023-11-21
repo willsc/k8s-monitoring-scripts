@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# usage ./generate_keytab.sh <principal> <output_keytab_file>
+
 # Check if the required command 'ktutil' is available
 if ! command -v ktutil &> /dev/null; then
     echo "Error: 'ktutil' command not found. Please make sure you have Kerberos utilities installed."
