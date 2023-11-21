@@ -16,16 +16,33 @@ principal="$1"
 output_keytab="$2"
 
 # Generate keytab with AES-128 and AES-256 keys using ktutil
-ktutil <<EOF
+ktutil_script=$(cat <<EOF
 addent -password -p ${principal}@REALM -k 1 -e aes128-cts-hmac-sha1-96
 addent -password -p ${principal}@REALM -k 2 -e aes256-cts-hmac-sha1-96
 wkt ${output_keytab}
 q
 EOF
+)
 
-if [ $? -eq 0 ]; then
-    echo "Keytab file '${output_keytab}' generated successfully for principal '${principal}' with AES-128 and AES-256 keys."
+ktutil_output=$(echo "$ktutil_script" | ktutil)
+
+# Check for errors in the ktutil output
+if [[ "$ktutil_output" =~ "ktutil:" ]]; then
+    echo "Error generating keytab file:"
+    echo "$ktutil_output"
+    exit 1
+fi
+
+echo "Keytab file '${output_keytab}' generated successfully for principal '${principal}' with AES-128 and AES-256 keys."
+
+# Verify that the keys have the correct salts
+keytab_info=$(klist -kte "${output_keytab}")
+aes128_salt=$(echo "$keytab_info" | awk '/aes128-cts-hmac-sha1-96/{print $3}')
+aes256_salt=$(echo "$keytab_info" | awk '/aes256-cts-hmac-sha1-96/{print $3}')
+
+if [ "$aes128_salt" != "0" ] && [ "$aes256_salt" != "0" ]; then
+    echo "Keys have the correct salts."
 else
-    echo "Error generating keytab file."
+    echo "Error: Keys do not have the correct salts."
     exit 1
 fi
