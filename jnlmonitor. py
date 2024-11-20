@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import paramiko
 import csv
 import os
@@ -14,43 +16,37 @@ def get_all_matching_files_and_timestamps(host, directory, pattern, ssh_user, ss
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        print(f"Connecting to {host}...")
-        ssh.connect(host, username=ssh_user, key_filename=ssh_key, timeout=30)
-        print(f"Connected to {host}. Searching for files...")
+        ssh.connect(host, username=ssh_user, key_filename=ssh_key)
 
         # Recursively search for all files ending with the specified pattern
         command = f"find {directory} -type f -name '*{pattern}'"
-        stdin, stdout, stderr = ssh.exec_command(command, timeout=30)
-        file_paths = stdout.read().decode().strip().split('\n')
-        error_output = stderr.read().decode().strip()
-
-        if error_output:
-            print(f"Error on {host}: {error_output}")
+        stdin, stdout, stderr = ssh.exec_command(command)
+        matching_files = stdout.read().decode().strip().split('\n')
 
         results = []
-        for file_path in file_paths:
+        for file_path in matching_files:
             if file_path:  # Check if file_path is not empty
                 # Get the timestamp for each file
-                command = f"stat -c %y {file_path}"
-                stdin, stdout, stderr = ssh.exec_command(command, timeout=30)
+                command = f"stat -c '%y' {file_path}"
+                stdin, stdout, stderr = ssh.exec_command(command)
                 full_timestamp = stdout.read().decode().strip()
-                shortened_timestamp = full_timestamp.split('.')[0][:-3]  # Shorten timestamp to 'YYYY-MM-DD HH:MM'
+                shortened_timestamp = full_timestamp.split()[0] + " " + full_timestamp.split()[1][0:5]  # Shorten timestamp to 'YYYY-MM-DD HH:MM'
+
                 results.append((file_path, shortened_timestamp))
-        
         ssh.close()
-        print(f"Search completed for {host}. Found {len(results)} files.")
         return results
+
     except Exception as e:
-        print(f"Error connecting to {host} or executing commands: {e}")
+        print(f"Error connecting to {host}: {e}")
         return []
 
 # Write results to a CSV file (append mode)
 def write_results_to_csv(results, output_file):
-    file_exists = os.path.isfile(output_file)
     with open(output_file, mode='a', newline='') as csvfile:
         fieldnames = ['Index', 'Host', 'Path', 'Status', 'Timestamp']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        if not file_exists:
+
+        if os.stat(output_file).st_size == 0:
             writer.writeheader()  # Write headers only if the file does not exist
 
         index = 1  # Index for the current batch of results
@@ -59,37 +55,37 @@ def write_results_to_csv(results, output_file):
                 'Index': index,
                 'Host': host,
                 'Path': file_path,
-                'Status': "1",  # Status is always "1" because these are found files
+                'Status': '1',  # Status is always "1" because these are found files
                 'Timestamp': timestamp
             })
             index += 1
 
 # Main function
 def main():
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Check for files on remote hosts using SSH.")
-    parser.add_argument("ssh_user", help="SSH username")
-    parser.add_argument("ssh_key", help="Path to SSH private key")
-    parser.add_argument("directory", help="Target directory to search")
-    parser.add_argument("pattern", help="File pattern to search for (e.g., '.Jnl')")
+    parser = argparse.ArgumentParser(description="Search for files on remote hosts and log results.")
+    parser.add_argument('--user', required=True, help='SSH username')
+    parser.add_argument('--key', required=True, help='Path to the private SSH key file')
+    parser.add_argument('--hosts', required=True, help='Path to the host configuration file')
+    parser.add_argument('--pattern', required=True, help='File pattern to search for')
+
     args = parser.parse_args()
 
-    config_file = 'hosts_config.txt'  # Name of the config file containing hosts
-    output_file = 'file_existence_results.csv'
-
-    ssh_user = args.ssh_user
-    ssh_key = args.ssh_key
-    directory = args.directory
+    ssh_user = args.user
+    ssh_key = args.key
+    config_file = args.hosts
     pattern = args.pattern
+    directory = "/deploy/data/jnl"  # Directory to check
+    output_file = "file_existence_results.csv"
 
     hosts = read_hosts_config(config_file)
+    results = []
 
     for host in hosts:
         matching_files = get_all_matching_files_and_timestamps(host, directory, pattern, ssh_user, ssh_key)
-        if matching_files:
-            results = [(host, file_path, timestamp) for file_path, timestamp in matching_files]
-            write_results_to_csv(results, output_file)
+        for file_path, timestamp in matching_files:
+            results.append((host, file_path, timestamp))
 
+    write_results_to_csv(results, output_file)
     print(f"Results appended to {output_file}")
 
 if __name__ == "__main__":
